@@ -505,14 +505,37 @@ function speakAnnouncement(name) {
   if(!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   playChime();
-  setTimeout(() => {
-    const text = `تنبيه. الطالبة ${name}، يرجى التوجه إلى بوابة الخروج فوراً. الطالبة ${name}، بوابة الخروج.`;
+
+  function doSpeak() {
+    const text = 'تنبيه. الطالبة ' + name + '، يرجى التوجه إلى بوابة الخروج فوراً. الطالبة ' + name + '، بوابة الخروج.';
     const utt = new SpeechSynthesisUtterance(text);
-    utt.lang = 'ar-SA'; utt.rate = 0.85; utt.volume = 1.0;
+    utt.volume = 1.0;
+    utt.rate = 0.8;
+    utt.pitch = 1.0;
+    utt.lang = 'ar-SA';
+
     const voices = window.speechSynthesis.getVoices();
-    const arVoice = voices.find(v => v.lang.startsWith('ar'));
-    if(arVoice) utt.voice = arVoice;
+    const arVoice = voices.find(v => v.lang && v.lang.startsWith('ar'));
+    if(arVoice) { utt.voice = arVoice; }
+
+    utt.onerror = function() {
+      const utt2 = new SpeechSynthesisUtterance(text);
+      utt2.volume = 1.0;
+      utt2.rate = 0.8;
+      window.speechSynthesis.speak(utt2);
+    };
+
     window.speechSynthesis.speak(utt);
+  }
+
+  setTimeout(function() {
+    const v = window.speechSynthesis.getVoices();
+    if(v && v.length > 0) {
+      doSpeak();
+    } else {
+      window.speechSynthesis.onvoiceschanged = function() { doSpeak(); };
+      setTimeout(doSpeak, 1500);
+    }
   }, 1200);
 }
 
